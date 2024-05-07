@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer</title>
+    <style>
+        /* Center the form */
+        body, html {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        /* Form styles */
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .upload-button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .upload-button:hover {
+            background-color: #0b7dda;
+        }
+
+        /* Loading spinner styles */
+        .backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="image" id="file-upload" accept="image/*" required>
+        <button type="submit" class="upload-button">Upload</button>
+    </form>
+
+    <div class="backdrop" id="backdrop">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            var form = event.target;
+            var formData = new FormData(form);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/resize");
+            xhr.responseType = "blob";
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    console.log(1);
+                    var blob = xhr.response;
+                    var filename = "see_albania_resized_image.jpeg";
+                    var contentDispositionHeader = xhr.getResponseHeader("Content-Disposition");
+                    if (contentDispositionHeader) {
+                        var filenameMatch = contentDispositionHeader.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+                    var link = document.createElement("a");
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+                    hideLoader();
+                } else {
+                    alert("Error: " + xhr.statusText);
+                    hideLoader();
+                }
+            };
+
+            xhr.onerror = function () {
+                alert("Network Error");
+                hideLoader();
+            };
+
+            showLoader();
+            xhr.send(formData);
+        });
+
+        function showLoader() {
+            document.getElementById("backdrop").style.display = "block";
+        }
+
+        function hideLoader() {
+            document.getElementById("backdrop").style.display = "none";
+        }
+    </script>
+</body>
+
+</html>
